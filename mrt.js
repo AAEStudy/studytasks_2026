@@ -586,7 +586,7 @@ var jsPsych = params.jsPsych;
       // ---- Build MRT blocks so we can interleave with meta-emotion calibration ----
       // Each block ends with the same thought-probe + confidence sequence as the original task.
       let mrt_blocks = [];
-      const numBlocks = (params.numBlocks !== undefined) ? params.numBlocks : 35;
+      const numBlocks = (params.numBlocks !== undefined) ? params.numBlocks : 2; //35 was original number
       const baseTime = 40;
       const jitterRange = 15;
 
