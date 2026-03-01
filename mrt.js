@@ -1,5 +1,4 @@
 function buildMRTChunk(params){
-let timeline = [];
 const subjectID = params.subjectID;
 var jsPsych = params.jsPsych;
       // Prevent accidental page unload.
@@ -627,16 +626,23 @@ var jsPsych = params.jsPsych;
       }
 
       // Build the MRT portion requested for this call
+      // Build the MRT portion requested for this call
       const blocksToTake = params.blocksToTake ?? mrt_blocks.length;
       const mrt_main = takeMrtBlocks(blocksToTake);
-timeline = timeline.concat(mrt_main);
+
+      let timeline = [];
+      timeline = timeline.concat(mrt_main);
+
       // 6. Save data
       // timeline.push(osfSaveData); // handled by main pipeline
-      // 7. Demographic survey
-      //timeline.push(demographics);
-      // 8. Debrief
-      timeline.push(debrief);
 
-      return { timeline, customData, convertToCSV, getSubjectID: ()=>subjectID };
+      // 7. Demographic survey
+      // timeline.push(demographics);
+
+      // 8. Debrief (IMPORTANT: don't include debrief in every chunk; see note below)
+      // timeline.push(debrief);
+
+return { timeline, customData, convertToCSV, getSubjectID: ()=>subjectID };
+      
     
 }
