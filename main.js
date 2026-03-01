@@ -105,7 +105,7 @@ async function start(){
   timeline.push(...buildMetaEmotionPractice(metaState));
 
   // -------- Interleaving plan --------
-  const CALI_CHUNK = 80;     // adjust
+  const CALI_CHUNK = 10;     // adjust
   const MRT_BLOCKS_PER_CHUNK = 2; // adjust (number of MRT blocks to run before switching)
 
   // Cali chunk 1
