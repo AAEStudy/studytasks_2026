@@ -1,5 +1,6 @@
 function buildMRTChunk(params){
 const subjectID = params.subjectID;
+const metronomeAudio = params.metronomeAudio;
 var jsPsych = params.jsPsych;
       // Prevent accidental page unload.
       function handleBeforeUnload(e) {
