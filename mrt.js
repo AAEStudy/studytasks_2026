@@ -1,4 +1,5 @@
 function buildMRTChunk(params){
+let timeline = [];
 const subjectID = params.subjectID;
 var jsPsych = params.jsPsych;
       // Prevent accidental page unload.
