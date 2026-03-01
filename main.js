@@ -112,24 +112,24 @@ async function start(){
   timeline.push(...buildMetaEmotionCalibrationChunk(metaState, CALI_CHUNK, 1));
 
   // MRT chunk 1 (take N blocks)
-  timeline.push(...buildMRTChunk({ jsPsych, subjectID, metronomeAudio, bellAudio, _state: sharedState, blocksToTake: MRT_BLOCKS_PER_CHUNK }).timeline);
+  timeline.push(...buildMRTChunk({ jsPsych, subjectID, metronomeAudio, _state: sharedState, blocksToTake: MRT_BLOCKS_PER_CHUNK }).timeline);
 
   // Cali chunk 2
   timeline.push(...buildMetaEmotionCalibrationChunk(metaState, CALI_CHUNK, 2));
 
   // MRT chunk 2
-  timeline.push(...buildMRTChunk({ jsPsych, subjectID, metronomeAudio, bellAudio, _state: sharedState, blocksToTake: MRT_BLOCKS_PER_CHUNK }).timeline);
+  timeline.push(...buildMRTChunk({ jsPsych, subjectID, metronomeAudio, _state: sharedState, blocksToTake: MRT_BLOCKS_PER_CHUNK }).timeline);
 
   // Cali chunk 3 (remainder) - just take another chunk; repeat as needed
   timeline.push(...buildMetaEmotionCalibrationChunk(metaState, CALI_CHUNK, 3));
 
   // MRT chunk 3
-  timeline.push(...buildMRTChunk({ jsPsych, subjectID, metronomeAudio, bellAudio, _state: sharedState, blocksToTake: MRT_BLOCKS_PER_CHUNK }).timeline);
+  timeline.push(...buildMRTChunk({ jsPsych, subjectID, metronomeAudio, _state: sharedState, blocksToTake: MRT_BLOCKS_PER_CHUNK }).timeline);
 
   // Finish remaining calibration (if any)
   while (metaState.caliCursor < metaState.calibrationPairs.length) {
     timeline.push(...buildMetaEmotionCalibrationChunk(metaState, CALI_CHUNK, Math.floor(metaState.caliCursor / CALI_CHUNK) + 4));
-    timeline.push(...buildMRTChunk({ jsPsych, subjectID, metronomeAudio, bellAudio, _state: sharedState, blocksToTake: MRT_BLOCKS_PER_CHUNK }).timeline);
+    timeline.push(...buildMRTChunk({ jsPsych, subjectID, metronomeAudio, _state: sharedState, blocksToTake: MRT_BLOCKS_PER_CHUNK }).timeline);
     // stop if MRT blocks run out; you can also break once you hit 30min worth
     if (sharedState.mrtCursor >= 35) break;
   }
