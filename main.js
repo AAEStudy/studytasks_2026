@@ -15,8 +15,7 @@ const subjectID = getParam("id") || getParam("PROLIFIC_PID") || "NA";
 // const qualtricsReturn = getParam("return") || null;
 
 // Prepare audio for MRT (uses same filenames as your MRT task; adjust if your repo differs)
-const metronomeAudio = new Audio("audio/metronomeMono.mp3");
-const bellAudio = new Audio("audio/bellMono.mp3");
+const metronomeAudio = new Audio("sounds/metronomeMono.mp3");
 
 // Global shared state for interleaving
 const sharedState = { mrtCursor: 0 };
