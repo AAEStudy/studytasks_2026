@@ -80,7 +80,6 @@ async function start(){
     jsPsych,
     subjectID,
     metronomeAudio,
-    bellAudio,
     _state: sharedState,
     // numBlocks: 35,      // keep original, adjust if needed
     // includeMidBreak: true
@@ -107,7 +106,7 @@ async function start(){
 
   // -------- Interleaving plan --------
   const CALI_CHUNK = 80;     // adjust
-  const MRT_BLOCKS_PER_CHUNK = 5; // adjust (number of MRT blocks to run before switching)
+  const MRT_BLOCKS_PER_CHUNK = 2; // adjust (number of MRT blocks to run before switching)
 
   // Cali chunk 1
   timeline.push(...buildMetaEmotionCalibrationChunk(metaState, CALI_CHUNK, 1));
