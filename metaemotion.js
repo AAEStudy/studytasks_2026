@@ -97,6 +97,9 @@ function iti(ms){
   return { type: jsPsychHtmlKeyboardResponse, stimulus:"", choices:"NO_KEYS", trial_duration: ms, data:{task:"metaemotion", event:"iti"} };
 }
 function passiveImg(src, ms, extra){
+  if(!src){
+    return { type: jsPsychHtmlKeyboardResponse, stimulus:`<div class="center">(missing image)</div>`, choices:"NO_KEYS", trial_duration: ms, data:{task:"metaemotion", event:"image_missing", ...extra} };
+  }
   return { type: jsPsychImageKeyboardResponse, stimulus: src, choices:"NO_KEYS", trial_duration: ms,
     data:{task:"metaemotion", event:"image", stimulus:src, ...extra} };
 }
