@@ -17,6 +17,44 @@ const subjectID = getParam("id") || getParam("PROLIFIC_PID") || "NA";
 // Prepare audio for MRT (uses same filenames as your MRT task; adjust if your repo differs)
 const metronomeAudio = new Audio("sounds/metronomeMono.mp3");
 
+// Transition screen helper (SPACE to continue)
+function transitionScreen(html, dataExtra={}){
+  return {
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus: `<div class="center" style="font-size:22px; line-height:1.35; max-width:900px; margin:0 auto;">${html}</div>`,
+    choices: [" "],
+    data: {task:"system", event:"transition", ...dataExtra}
+  };
+}
+
+// Unlock audio on user gesture (required by browsers)
+function audioUnlockTrial(){
+  return {
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus: `<div class="center" style="font-size:22px; line-height:1.35;">
+      <p><b>Metronome Task</b></p>
+      <p>Press <b>SPACE</b> to continue (this enables audio).</p>
+    </div>`,
+    choices: [" "],
+    on_finish: async () => {
+      try {
+        metronomeAudio.currentTime = 0;
+        await metronomeAudio.play();
+        metronomeAudio.pause();
+        metronomeAudio.currentTime = 0;
+      } catch(e) {}
+      try {
+        bellAudio.currentTime = 0;
+        await bellAudio.play();
+        bellAudio.pause();
+        bellAudio.currentTime = 0;
+      } catch(e) {}
+    },
+    data: {task:"system", event:"audio_unlock"}
+  };
+}
+
+
 // Global shared state for interleaving
 const sharedState = { mrtCursor: 0 };
 
@@ -90,6 +128,25 @@ async function start(){
 
   const timeline = [];
 
+  // ---- Preload Meta-Emotion images to prevent uneven display / blank frames ----
+  const metaPreload = [];
+  // practice images
+  for (const t of metaState.practicePairs){ metaPreload.push("stimuli/practice/" + t.p1); metaPreload.push("stimuli/practice/" + t.p2); }
+  // calibration images (pairs)
+  for (const t of metaState.calibrationPairs){ metaPreload.push("stimuli/formal/" + t.p1); metaPreload.push("stimuli/formal/" + t.p2); }
+  // review + meta lists
+  for (const fn of metaState.reviewList){ metaPreload.push("stimuli/formal/" + fn); }
+  for (const fn of metaState.metaList){ metaPreload.push("stimuli/formal/" + fn); }
+  // instruction images
+  metaPreload.push("assets/instruction.jpg","assets/endx_prac.jpg","assets/restx.jpg","assets/instruction2.jpg");
+
+  timeline.push({
+    type: jsPsychPreload,
+    images: [...new Set(metaPreload)],
+    show_progress_bar: true
+  });
+
+
   // Start screen
   timeline.push({
     type: jsPsychHtmlKeyboardResponse,
@@ -112,24 +169,34 @@ async function start(){
   timeline.push(...buildMetaEmotionCalibrationChunk(metaState, CALI_CHUNK, 1));
 
   // MRT chunk 1 (take N blocks)
-  timeline.push(...buildMRTChunk({ jsPsych, subjectID, metronomeAudio, _state: sharedState, blocksToTake: MRT_BLOCKS_PER_CHUNK }).timeline);
+    timeline.push(audioUnlockTrial());
+  timeline.push(...buildMRTChunk({ jsPsych, subjectID, metronomeAudio, _state: sharedState, includeMidBreak: false, blocksToTake: MRT_BLOCKS_PER_CHUNK }).timeline);
+
+  timeline.push(transitionScreen("<p><b>Meta-Emotion Calibration</b></p><p>Press <b>SPACE</b> to continue.</p>", {next:"calibration"}));
 
   // Cali chunk 2
   timeline.push(...buildMetaEmotionCalibrationChunk(metaState, CALI_CHUNK, 2));
 
   // MRT chunk 2
-  timeline.push(...buildMRTChunk({ jsPsych, subjectID, metronomeAudio, _state: sharedState, blocksToTake: MRT_BLOCKS_PER_CHUNK }).timeline);
+    timeline.push(audioUnlockTrial());
+  timeline.push(...buildMRTChunk({ jsPsych, subjectID, metronomeAudio, _state: sharedState, includeMidBreak: false, blocksToTake: MRT_BLOCKS_PER_CHUNK }).timeline);
+
+  timeline.push(transitionScreen("<p><b>Meta-Emotion Calibration</b></p><p>Press <b>SPACE</b> to continue.</p>", {next:"calibration"}));
 
   // Cali chunk 3 (remainder) - just take another chunk; repeat as needed
   timeline.push(...buildMetaEmotionCalibrationChunk(metaState, CALI_CHUNK, 3));
 
   // MRT chunk 3
-  timeline.push(...buildMRTChunk({ jsPsych, subjectID, metronomeAudio, _state: sharedState, blocksToTake: MRT_BLOCKS_PER_CHUNK }).timeline);
+    timeline.push(audioUnlockTrial());
+  timeline.push(...buildMRTChunk({ jsPsych, subjectID, metronomeAudio, _state: sharedState, includeMidBreak: false, blocksToTake: MRT_BLOCKS_PER_CHUNK }).timeline);
 
   // Finish remaining calibration (if any)
   while (metaState.caliCursor < metaState.calibrationPairs.length) {
+    timeline.push(transitionScreen("<p><b>Meta-Emotion Calibration</b></p><p>Press <b>SPACE</b> to continue.</p>", {next:"calibration"}));
+
     timeline.push(...buildMetaEmotionCalibrationChunk(metaState, CALI_CHUNK, Math.floor(metaState.caliCursor / CALI_CHUNK) + 4));
-    timeline.push(...buildMRTChunk({ jsPsych, subjectID, metronomeAudio, _state: sharedState, blocksToTake: MRT_BLOCKS_PER_CHUNK }).timeline);
+      timeline.push(audioUnlockTrial());
+  timeline.push(...buildMRTChunk({ jsPsych, subjectID, metronomeAudio, _state: sharedState, includeMidBreak: false, blocksToTake: MRT_BLOCKS_PER_CHUNK }).timeline);
     // stop if MRT blocks run out; you can also break once you hit 30min worth
     if (sharedState.mrtCursor >= 35) break;
   }
