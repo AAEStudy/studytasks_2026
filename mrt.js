@@ -280,16 +280,13 @@ var jsPsych = params.jsPsych;
       let practice_tapping_pad = {
         type: jsPsychHtmlKeyboardResponse,
         stimulus: function() {
-          if(practiceLastRT === null) {
-            return "";
-          }
           return '<div class="plus">+</div>';
         },
         choices: [" "],
         response_ends_trial: false,
         trial_duration: function() {
-          if(practiceLastRT === null) {
-            return 0;
+          if (practiceLastRT === null) {
+            return 650;
           }
           let leftover = 1300 - practiceLastRT;
           return leftover > 0 ? leftover : 0;
@@ -740,6 +737,21 @@ var jsPsych = params.jsPsych;
 
         // 3. Practice node (exact original)
         timeline.push(practice_node);
+
+        // Transition to main trials (explicit user gesture for audio resume)
+        timeline.push({
+          type: jsPsychHtmlKeyboardResponse,
+          stimulus: `<div class="center" style="font-size:22px; line-height:1.35;">
+            <p>Practice complete.</p>
+            <p>Press <b>SPACE</b> to begin the main trials.</p>
+          </div>`,
+          choices: [" "],
+          on_finish: async () => {
+            try { metronomeAudio.currentTime = 0; await metronomeAudio.play(); metronomeAudio.pause(); metronomeAudio.currentTime = 0; } catch(e) {}
+            try { if (typeof bellAudio !== "undefined" && bellAudio) { bellAudio.currentTime = 0; await bellAudio.play(); bellAudio.pause(); bellAudio.currentTime = 0; } } catch(e) {}
+          },
+          data: { task: "mrt", event: "practice_to_main_continue" }
+        });
 
         // 4. Countdown before main (exact original)
         timeline.push(add_countdown_pad());
