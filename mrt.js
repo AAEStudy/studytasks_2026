@@ -32,6 +32,34 @@ var jsPsych = params.jsPsych;
         break_time: [],  // <-- New field for break durations
         instructed_response: []  // New column for instructed-response data
       };
+
+      // ---------------- MRT Instructions (added back for interleaving pipeline) ----------------
+      const mrtInstructions = {
+        type: jsPsychInstructions,
+        pages: [
+          `<p style="color:white; font-size:20pt; text-align:left;">
+            In this task you will hear a metronome tick. Your job is to press the <b>SPACEBAR</b> in time with the metronome.
+            Try to synchronize your tapping as closely as possible with each tick.
+          </p>
+          <p style="color:white; font-size:18pt; text-align:left;">
+            The task is divided into short segments. Sometimes you will be asked quick questions about your focus and confidence.
+            You can pause at any time if needed (the pause feature is unchanged from the original task).
+          </p>`,
+          `<p style="color:white; font-size:20pt; text-align:left;">
+            First you will do a short practice.
+          </p>
+          <p style="color:white; font-size:18pt; text-align:left;">
+            Press <b>Next</b> to begin.
+          </p>`
+        ],
+        show_clickable_nav: true,
+        button_label_next: "Next",
+        button_label_previous: "Back",
+        data: { task: "mrt", event: "instructions" }
+      };
+
+      // Flag to ensure we only run instructions + practice once across interleaving
+      if (params._state.mrtInitialized === undefined) params._state.mrtInitialized = false;
       const lag_time = 650;
       let tempPerformance = null;
       let tempProbeRT1 = null;
@@ -632,6 +660,22 @@ var jsPsych = params.jsPsych;
       const mrt_main = takeMrtBlocks(blocksToTake);
 
       let timeline = [];
+
+      // ---- Run MRT instructions + practice only on first entry ----
+      if (!params._state.mrtInitialized) {
+        timeline.push(mrtInstructions);
+        // Countdown before practice
+        timeline.push(add_countdown_pad());
+        timeline = timeline.concat(countdown_main);
+        // Practice block (already defined in this script)
+        timeline.push(practice_block);
+        // Countdown before main segment
+        timeline.push(add_countdown_pad());
+        timeline = timeline.concat(countdown_main);
+        params._state.mrtInitialized = true;
+      }
+
+      // ---- Append the requested MRT blocks for this chunk ----
       timeline = timeline.concat(mrt_main);
 
       // 6. Save data
