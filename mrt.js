@@ -693,7 +693,7 @@ var jsPsych = params.jsPsych;
         }
 
         blockTimeline.push(thought_probe_block);
-        blockTimeline.push(continue_after_probe);
+        
 
         if ((params.includeMidBreak !== false) && (i === Math.ceil(numBlocks / 2) - 1)) {
           blockTimeline.push(break_trial);
@@ -778,18 +778,5 @@ params._state.convertToCSV = convertToCSV;
       
     
 }
-      // Screen to ensure user gesture before metronome resumes (fixes occasional audio pause)
-      const continue_after_probe = {
-        type: jsPsychHtmlKeyboardResponse,
-        stimulus: `<div class="center" style="font-size:22px; line-height:1.35;">
-          <p>Press <b>SPACE</b> to continue.</p>
-        </div>`,
-        choices: [" "],
-        on_finish: async () => {
-          try { metronomeAudio.currentTime = 0; await metronomeAudio.play(); metronomeAudio.pause(); metronomeAudio.currentTime = 0; } catch(e) {}
-          try { if (typeof bellAudio !== "undefined" && bellAudio) { bellAudio.currentTime = 0; await bellAudio.play(); bellAudio.pause(); bellAudio.currentTime = 0; } } catch(e) {}
-        },
-        data: { task: "mrt", event: "continue_after_probe" }
-      };
-
+      
 
