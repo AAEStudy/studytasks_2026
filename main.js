@@ -56,15 +56,14 @@ function audioUnlockTrial(){
 
 
 // Global shared state for interleaving
-const sharedState = { mrtCursor: 0 };
+const sharedState = { mrtCursor: 0, mrtInitialized: false, trialNum: 0, probeBlockCounter: 0 };
 
 const jsPsych = initJsPsych({
   on_finish: async () => {
     // ---- Create MRT TSV from your existing MRT customData ----
     // This assumes buildMRTChunk returns {customData, convertToCSV}.
     // We stash it on window after first build.
-    const mrtApi = window.__mrtApi;
-    const mrtTsv = mrtApi ? mrtApi.convertToCSV(mrtApi.customData) : "";
+    const mrtTsv = (sharedState.convertToCSV && sharedState.customData) ? sharedState.convertToCSV(sharedState.customData) : "";
 
     // ---- Create Meta-Emotion Matlab-style CSVs ----
     const metaOut = exportMetaEmotion(window.__metaState, jsPsych);
@@ -111,20 +110,6 @@ async function start(){
   // Init Meta-Emotion lists
   const metaState = await initMetaEmotion({ subject: subjectID });
   window.__metaState = metaState;
-
-  // Build MRT chunk API (from your retained task)
-  // NOTE: buildMRTChunk is defined in mrt.js (loaded before main.js)
-  const mrtApi = buildMRTChunk({
-    jsPsych,
-    subjectID,
-    metronomeAudio,
-    _state: sharedState,
-    // numBlocks: 35,      // keep original, adjust if needed
-    // includeMidBreak: true
-    blocksToTake: 0       // build internal structures but take none yet
-  });
-  // buildMRTChunk returns an API with timeline/customData/convertToCSV
-  window.__mrtApi = mrtApi;
 
   const timeline = [];
 
