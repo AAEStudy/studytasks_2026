@@ -88,7 +88,7 @@ var jsPsych = params.jsPsych;
 
       // Create a separate instructions trial for each page:
 
-      // Create a separate instructions trial for each page (from original MRT):
+      // Create a separate instructions trial for each page:
       let instructionsTrials = instructions_pages.map((pageText, index) => {
         return {
           type: jsPsychInstructions,
@@ -125,6 +125,16 @@ var jsPsych = params.jsPsych;
                     btn.style.visibility = "visible";
                     btn.disabled = false;
                   });
+                  let ov = document.getElementById("instruction-overlay");
+                  if(ov){
+                    ov.parentNode.removeChild(ov);
+                  }
+                }, 10000);
+              }
+            }, 100); // delay 100ms to ensure the nav is rendered
+          }
+        };
+      });
 
 
       // ---------------- Countdown Functions ----------------
