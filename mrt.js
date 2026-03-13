@@ -50,6 +50,83 @@ var jsPsych = params.jsPsych;
       let practiceLastRT = null;
       let mainLastRT = null;
 
+      
+      // ---------------- Instructions (from original MRT) ----------------
+      let instructions_pages = [
+        // Page 1
+        `<p>You will now do the same metronome task you did at the beginning of this study but this time for a little over 20 minutes, split into two halves.</p>
+        <p>After the first half, you will be able take a short break if needed.</p>
+        <p>Please refresh yourself on the instructions in the following pages.</p>
+        <p>
+        <p><em>Note: Make sure you fully understand the instructions before beginning. Wait for the next button to become available on each page.</em></p>`,
+        
+        // Page 2
+        `<p>In this section of the study, you will engage in a task where you will hear a metronome sound presented at a constant rate via your headphones or external speakers.</p>
+        <p>Your task will be to press the spacebar in synchrony with the onset of the metronome so that you press the spacebar exactly when each metronome sound is presented.</p>
+        <p>Your accuracy is determined by how close in time your responses match the metronome and how consistent they are</p>
+          <p>A plus sign will display after each time you press the spacebar to indicate that your key press registered.</p>`,
+        
+        // Page 3
+        `<p>Every so often, the task and the metronome will temporarily stop, and you will be presented with two questions.</p>
+        <p>First, a screen will ask you to indicate how on task you were just prior to us asking (within the last 15 seconds or so) on a scale from 1 (“Least on Task”) to 6 (“Most on Task”).</p>
+        <p>The term “on task” refers to how focused you were on keeping your clicks in sync with the metronome versus the extent to which you were distracted or “zoned out.”</p>
+        <p>This question should be answered based on your own relative levels of focus throughout this task. ‘Most on Task’ represents what you consider to be your own highest level of focus, and ‘Least on Task’ represents your lowest level of focus when clicking along to the metronome in sync at a constant rate.</p>`,
+        
+        // Page 4
+        `<p> Keep in mind that, each number (1-6) should in theory be selected a roughly (not perfectly) equal number of times since your 'highest' and 'lowest' levels of focus are relative to each other.</p>
+        <p>For instance, since there are 6 options, your actual task focus level can only fall into the category of 6 your 'most on task' (the highest possible ranking) during this task for 1/6th of the total task time, and 1 the 'lowest level' 1/6th of the time, or a focus rating of '3' 1/6th of the time and so on for each number.</p>
+        <p>It is normal for your level of focus to vary. There will be a dividing line between options 3 and 4 indicating the middle of the scale.</p>
+        <p>If you were less focused than what you consider your middle or average level of focus, choose from 1–3; if more focused, choose from 4–6.</p>`,
+        
+        // Page 5
+        `<p>Lastly, you will be presented with a screen asking you to indicate your level of confidence in your task focus response, from 1 (“Least Confident”) to 6 (“Most Confident”).</p>
+        <p>Here, 1 means you were guessing and 6 means you are completely sure your response reflects your mental state just before we asked.</p>
+        <p>Please use the full range of options (1–6) to indicate your relative degree of focus on clicking in time to the metronome when we ask and your level of confidence in that rating.<br></p>
+         <p>This part of the experiment will take about 20 minutes. You will begin with practice trials, and then you will be notified when the main trials start.</p>
+        <p>If you are ready to begin, press "Next."</p>`
+      ];
+
+      // Create a separate instructions trial for each page:
+
+      // Create a separate instructions trial for each page (from original MRT):
+      let instructionsTrials = instructions_pages.map((pageText, index) => {
+        return {
+          type: jsPsychInstructions,
+          pages: [pageText],
+          show_clickable_nav: true,
+          key_forward: null,     // Disable right arrow navigation
+          key_backward: null,    // Disable left arrow navigation
+          allow_backward: true, // let participants go back on pages > 1
+          button_label_next: "NEXT",
+          button_label_last: (index === instructions_pages.length - 1) ? "START" : "NEXT",
+          on_load: function() {
+            // Wait a brief moment to ensure the navigation container is rendered
+            setTimeout(function(){
+              // Get the navigation container (adjust the selector if needed)
+              let navContainer = document.querySelector(".jspsych-instructions-nav");
+              if(navContainer){
+                // Get its position relative to the viewport
+                let rect = navContainer.getBoundingClientRect();
+                // Create an overlay that covers from the nav container's top to the bottom of the viewport
+                let overlay = document.createElement("div");
+                overlay.id = "instruction-overlay";
+                overlay.style.position = "fixed";
+                overlay.style.top = rect.top + "px";
+                overlay.style.left = "0";
+                overlay.style.width = "100%";
+                overlay.style.height = (window.innerHeight - rect.top) + "px";
+                overlay.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
+                overlay.style.zIndex = "10000";
+                document.body.appendChild(overlay);
+                // Remove the overlay after 10 seconds
+                setTimeout(function(){
+                  let navButtons = document.querySelectorAll(".jspsych-instructions-nav-button");
+                  navButtons.forEach(function(btn) {
+                    btn.style.visibility = "visible";
+                    btn.disabled = false;
+                  });
+
+
       // ---------------- Countdown Functions ----------------
       function add_countdown(n, l=1300) {
         return {
