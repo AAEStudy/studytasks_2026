@@ -14,50 +14,27 @@ var jsPsych = params.jsPsych;
 
       // ---------------- Global Variables & Data Storage ----------------
       //setIDfromlink();
-      let trialNum = 0;  
-      let probeBlockCounter = 0; //for the instructed response option
-      let customData = {
-        subject: [],
-        trial: [],
-        task: [],
-        trial_num: [],
-        RT_from_metronome: [],
-        omission: [],
-        performance_rating: [],
-        probe1_rt: [],
-        probe2_rt: [],
-        confidence_rating: [],
-        //probe_text: [],
-        pause_time: [],
-        break_time: [],  // <-- New field for break durations
-        instructed_response: []  // New column for instructed-response data
-      };
-
-      // ---------------- MRT Instructions (added back for interleaving pipeline) ----------------
-      const mrtInstructions = {
-        type: jsPsychInstructions,
-        pages: [
-          `<p style="color:white; font-size:20pt; text-align:left;">
-            In this task you will hear a metronome tick. Your job is to press the <b>SPACEBAR</b> in time with the metronome.
-            Try to synchronize your tapping as closely as possible with each tick.
-          </p>
-          <p style="color:white; font-size:18pt; text-align:left;">
-            The task is divided into short segments. Sometimes you will be asked quick questions about your focus and confidence.
-            You can pause at any time if needed (the pause feature is unchanged from the original task).
-          </p>`,
-          `<p style="color:white; font-size:20pt; text-align:left;">
-            First you will do a short practice.
-          </p>
-          <p style="color:white; font-size:18pt; text-align:left;">
-            Press <b>Next</b> to begin.
-          </p>`
-        ],
-        show_clickable_nav: true,
-        button_label_next: "Next",
-        button_label_previous: "Back",
-        data: { task: "mrt", event: "instructions" }
-      };
-
+      let trialNum = (params._state.trialNum ?? 0);  
+      let probeBlockCounter = (params._state.probeBlockCounter ?? 0); //for the instructed response option
+      let customData = params._state.customData;
+      if (!customData) {
+        customData = {
+          subject: [],
+          trial: [],
+          task: [],
+          trial_num: [],
+          RT_from_metronome: [],
+          omission: [],
+          performance_rating: [],
+          probe1_rt: [],
+          probe2_rt: [],
+          confidence_rating: [],
+          pause_time: [],
+          break_time: [],
+          instructed_response: []
+        };
+        params._state.customData = customData;
+      }
       // Flag to ensure we only run instructions + practice once across interleaving
       if (params._state.mrtInitialized === undefined) params._state.mrtInitialized = false;
       const lag_time = 650;
@@ -100,7 +77,7 @@ var jsPsych = params.jsPsych;
 
       // ---------------- Data Saving Functions ----------------
       function saveTappingTrial(score, taskType = "metronome") {
-        trialNum++;
+        trialNum++; params._state.trialNum = trialNum;
         customData.subject.push(subjectID);
         customData.trial.push(trialNum);
         customData.task.push(taskType); // will be "practice trial" or "metronome"
@@ -116,7 +93,7 @@ var jsPsych = params.jsPsych;
         customData.instructed_response.push("NA"); // Not applicable for tapping trials
       }
       function saveThoughtProbeTrial(confidence) {
-        trialNum++;
+        trialNum++; params._state.trialNum = trialNum;
         let probeText = (tempPerformance > 3) ? "On Task" : "Confident";
         customData.subject.push(subjectID);
         customData.trial.push(trialNum);
@@ -137,7 +114,7 @@ var jsPsych = params.jsPsych;
         tempProbeRT2 = null;
       }
       function savePauseTrial(pauseDuration) {
-        trialNum++;
+        trialNum++; params._state.trialNum = trialNum;
         customData.subject.push(subjectID);
         customData.trial.push(trialNum);
         customData.task.push("pause");
@@ -372,7 +349,7 @@ var jsPsych = params.jsPsych;
             on_finish: function(data) {
               
               // 1) Increment your trial counter
-              trialNum++;
+              trialNum++; params._state.trialNum = trialNum;
               // 2) Add a row to customData with the actual response
               customData.subject.push(subjectID);
               customData.trial.push(trialNum);
@@ -632,6 +609,7 @@ var jsPsych = params.jsPsych;
         }
 
         blockTimeline.push(thought_probe_block);
+        blockTimeline.push(continue_after_probe);
 
         if ((params.includeMidBreak !== false) && (i === Math.ceil(numBlocks / 2) - 1)) {
           blockTimeline.push(break_trial);
@@ -663,15 +641,23 @@ var jsPsych = params.jsPsych;
 
       // ---- Run MRT instructions + practice only on first entry ----
       if (!params._state.mrtInitialized) {
-        timeline.push(mrtInstructions);
-        // Countdown before practice
+        // 1. Instructions (exact original)
+        timeline = timeline.concat(instructionsTrials);
+
+        // 2. Countdown before practice (exact original)
+        timeline.push(add_countdown_pad());
+        timeline.push(add_countdown("Practice trials starting in 3..."));
+        timeline.push(add_countdown("Practice trials starting in 2..."));
+        timeline.push(add_countdown("Practice trials starting in 1..."));
+        timeline.push(add_countdown("Go!", 650));
+
+        // 3. Practice node (exact original)
+        timeline.push(practice_node);
+
+        // 4. Countdown before main (exact original)
         timeline.push(add_countdown_pad());
         timeline = timeline.concat(countdown_main);
-        // Practice block (already defined in this script)
-        timeline.push(practice_block);
-        // Countdown before main segment
-        timeline.push(add_countdown_pad());
-        timeline = timeline.concat(countdown_main);
+
         params._state.mrtInitialized = true;
       }
 
@@ -687,7 +673,24 @@ var jsPsych = params.jsPsych;
       // 8. Debrief (IMPORTANT: don't include debrief in every chunk; see note below)
       // timeline.push(debrief);
 
-return { timeline, customData, convertToCSV, getSubjectID: ()=>subjectID };
+params._state.convertToCSV = convertToCSV;
+      params._state.customData = customData;
+      return { timeline, customData, convertToCSV, getSubjectID: ()=>subjectID };
       
     
 }
+      // Screen to ensure user gesture before metronome resumes (fixes occasional audio pause)
+      const continue_after_probe = {
+        type: jsPsychHtmlKeyboardResponse,
+        stimulus: `<div class="center" style="font-size:22px; line-height:1.35;">
+          <p>Press <b>SPACE</b> to continue.</p>
+        </div>`,
+        choices: [" "],
+        on_finish: async () => {
+          try { metronomeAudio.currentTime = 0; await metronomeAudio.play(); metronomeAudio.pause(); metronomeAudio.currentTime = 0; } catch(e) {}
+          try { if (typeof bellAudio !== "undefined" && bellAudio) { bellAudio.currentTime = 0; await bellAudio.play(); bellAudio.pause(); bellAudio.currentTime = 0; } } catch(e) {}
+        },
+        data: { task: "mrt", event: "continue_after_probe" }
+      };
+
+
